@@ -1,0 +1,118 @@
+import numpy as np
+
+# Define the system
+A = np.array([
+    [4, -1, 0, -1, 0, 0],
+    [-1, 4, -1, 0, -1, 0],
+    [0, -1, 4, 0, 1, -1],
+    [-1, 0, 0, 4, -1, -1],
+    [0, -1, 0, -1, 4, -1],
+    [0, 0, -1, 0, -1, 4]
+], dtype=float)
+
+b = np.array([0, -1, 9, 4, 8, 6], dtype=float)
+
+# Jacobi Method
+def jacobi(A, b, max_iter=1000, tol=1e-10):
+    n = len(b)
+    x = np.zeros(n)
+    x_new = np.zeros(n)
+    
+    for k in range(max_iter):
+        for i in range(n):
+            sigma = 0
+            for j in range(n):
+                if j != i:
+                    sigma += A[i,j] * x[j]
+            x_new[i] = (b[i] - sigma) / A[i,i]
+        
+        if np.linalg.norm(x_new - x) < tol:
+            break
+            
+        x = x_new.copy()
+    
+    return x_new, k+1
+
+# Gauss-Seidel Method
+def gauss_seidel(A, b, max_iter=1000, tol=1e-10):
+    n = len(b)
+    x = np.zeros(n)
+    
+    for k in range(max_iter):
+        x_old = x.copy()
+        for i in range(n):
+            sigma = 0
+            for j in range(n):
+                if j != i:
+                    sigma += A[i,j] * x[j]
+            x[i] = (b[i] - sigma) / A[i,i]
+        
+        if np.linalg.norm(x - x_old) < tol:
+            break
+    
+    return x, k+1
+
+# SOR Method
+def sor(A, b, omega=1.1, max_iter=1000, tol=1e-10):
+    n = len(b)
+    x = np.zeros(n)
+    
+    for k in range(max_iter):
+        x_old = x.copy()
+        for i in range(n):
+            sigma = 0
+            for j in range(n):
+                if j != i:
+                    sigma += A[i,j] * x[j]
+            x[i] = (1 - omega) * x_old[i] + omega * (b[i] - sigma) / A[i,i]
+        
+        if np.linalg.norm(x - x_old) < tol:
+            break
+    
+    return x, k+1
+
+# Conjugate Gradient Method
+def conjugate_gradient(A, b, max_iter=1000, tol=1e-10):
+    n = len(b)
+    x = np.zeros(n)
+    r = b - A @ x
+    p = r.copy()
+    
+    for k in range(max_iter):
+        Ap = A @ p
+        alpha = np.dot(r, r) / np.dot(p, Ap)
+        x = x + alpha * p
+        r_new = r - alpha * Ap
+        
+        if np.linalg.norm(r_new) < tol:
+            break
+            
+        beta = np.dot(r_new, r_new) / np.dot(r, r)
+        p = r_new + beta * p
+        r = r_new
+    
+    return x, k+1
+
+# Solve using all methods
+x_jacobi, iterations_j = jacobi(A, b)
+x_gs, iterations_gs = gauss_seidel(A, b)
+x_sor, iterations_sor = sor(A, b, omega=1.1)
+x_cg, iterations_cg = conjugate_gradient(A, b)
+
+# Print results
+print("Jacobi Method Solution:")
+print(x_jacobi)
+print(f"Iterations: {iterations_j}")
+print("Residual norm:", np.linalg.norm(A @ x_jacobi - b))
+print("\nGauss-Seidel Method Solution:")
+print(x_gs)
+print(f"Iterations: {iterations_gs}")
+print("Residual norm:", np.linalg.norm(A @ x_gs - b))
+print("\nSOR Method Solution (ω=1.1):")
+print(x_sor)
+print(f"Iterations: {iterations_sor}")
+print("Residual norm:", np.linalg.norm(A @ x_sor - b))
+print("\nConjugate Gradient Method Solution:")
+print(x_cg)
+print(f"Iterations: {iterations_cg}")
+print("Residual norm:", np.linalg.norm(A @ x_cg - b))
